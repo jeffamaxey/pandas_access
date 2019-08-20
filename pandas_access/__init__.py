@@ -134,9 +134,10 @@ def read_table(rdb_file, table_name, *args, **kwargs):
     df = pd.read_csv(proc.stdout, *args, **kwargs)
 
     # Convert octal string to raw bytes
-    for col, dtype in enumerate(df.dtypes):
-        if dtype == 'object':
-            for row in range(df.shape[0]):
-                df.iloc[row, col] = codecs.escape_decode(df.iloc[row, col])[0]
+    for column in df.columns:
+        if dtypes[column] == np.bytes_:
+            df.loc[:, column] = df.loc[:, column].map(
+                lambda x: codecs.escape_decode(x)[0]
+            )
 
     return df
