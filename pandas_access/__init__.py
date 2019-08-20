@@ -12,7 +12,7 @@ except ImportError:
 TABLE_RE = re.compile("CREATE TABLE \[(\w+)\]\s+\((.*?\));",
                       re.MULTILINE | re.DOTALL)
 
-DEF_RE = re.compile("\s*\[(\w+)\]\s*(.*?),")
+DEF_RE = re.compile("\s*\[(\w+)\]\s*(.*)$")
 
 
 def list_tables(rdb_file, encoding="latin-1"):
@@ -52,7 +52,7 @@ def _extract_defs(defs_str):
     for line in lines:
         m = DEF_RE.match(line)
         if m:
-            defs[m.group(1)] = m.group(2)
+            defs[m.group(1)] = m.group(2).replace(',', '').strip()
     return defs
 
 
