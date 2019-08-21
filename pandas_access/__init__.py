@@ -12,7 +12,7 @@ except ImportError:
 TABLE_RE = re.compile("CREATE TABLE \[(\w+)\]\s+\((.*?\));",
                       re.MULTILINE | re.DOTALL)
 
-DEF_RE = re.compile("\s*\[(\w+)\]\s*(.*?),")
+DEF_RE = re.compile("\s*\[(\w+)\]\s*(.*)$")
 
 
 def list_tables(rdb_file, encoding="latin-1"):
@@ -52,7 +52,7 @@ def _extract_defs(defs_str):
     for line in lines:
         m = DEF_RE.match(line)
         if m:
-            defs[m.group(1)] = m.group(2)
+            defs[m.group(1)] = m.group(2).replace(',', '').strip()
     return defs
 
 
@@ -134,9 +134,10 @@ def read_table(rdb_file, table_name, *args, **kwargs):
     df = pd.read_csv(proc.stdout, *args, **kwargs)
 
     # Convert octal string to raw bytes
-    for col, dtype in enumerate(df.dtypes):
-        if dtype == 'object':
-            for row in range(df.shape[0]):
-                df.iloc[row, col] = codecs.escape_decode(df.iloc[row, col])[0]
+    for column in df.columns:
+        if dtypes[column] == np.bytes_:
+            df.loc[:, column] = df.loc[:, column].map(
+                lambda x: codecs.escape_decode(x)[0]
+            )
 
     return df
