@@ -131,7 +131,7 @@ def read_table(rdb_file, table_name, *args, **kwargs):
 
     cmd = ['mdb-export', '-b', 'octal', rdb_file, table_name]
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    df = pd.read_csv(proc.stdout, *args, **kwargs)
+    df = pd.read_csv(proc.stdout, keep_default_na=False, *args, **kwargs)
 
     # Convert octal string to raw bytes
     for column in df.columns:
