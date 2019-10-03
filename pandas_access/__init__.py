@@ -1,5 +1,8 @@
 import codecs
+import os
+import platform
 import re
+import shutil
 import subprocess
 import pandas as pd
 import numpy as np
@@ -14,6 +17,19 @@ TABLE_RE = re.compile("CREATE TABLE \[(\w+)\]\s+\((.*?\));",
 
 DEF_RE = re.compile("\s*\[(\w+)\]\s*(.*)$")
 
+# Get executable directory
+bin_dir = ''
+if not shutil.which('mdb-export'):
+    env = os.environ.get('VIRTUAL_ENV', None)
+    if env is not None:
+        if platform.system() == 'Windows':
+            bin_dir = os.path.join(env, 'Scripts')
+        else:
+            bin_dir = os.path.join(env, 'bin')
+
+mdb_export = os.path.join(bin_dir, 'mdb-export')
+mdb_schema = os.path.join(bin_dir, 'mdb-schema')
+mdb_tables = os.path.join(bin_dir, 'mdb-tables')
 
 def list_tables(rdb_file, encoding="latin-1"):
     """
@@ -23,7 +39,7 @@ def list_tables(rdb_file, encoding="latin-1"):
         actually be UTF-8.
     :return: A list of the tables in a given database.
     """
-    tables = subprocess.check_output(['mdb-tables', rdb_file]).decode(encoding)
+    tables = subprocess.check_output([mdb_tables, rdb_file]).decode(encoding)
     return tables.strip().split(" ")
 
 
@@ -63,7 +79,7 @@ def read_schema(rdb_file, encoding='utf8'):
         spits out UTF-8, exclusively.
     :return: a dictionary of table -> column -> access_data_type
     """
-    output = subprocess.check_output(['mdb-schema', rdb_file])
+    output = subprocess.check_output([mdb_schema, rdb_file])
     lines = output.decode(encoding).splitlines()
     schema_ddl = "\n".join(l for l in lines if l and not l.startswith('-'))
 
@@ -129,7 +145,7 @@ def read_table(rdb_file, table_name, *args, **kwargs):
         if dtypes != {}:
             kwargs['dtype'] = dtypes
 
-    cmd = ['mdb-export', '-b', 'octal', rdb_file, table_name]
+    cmd = [mdb_export, '-b', 'octal', rdb_file, table_name]
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     df = pd.read_csv(proc.stdout, keep_default_na=False, *args, **kwargs)
 
