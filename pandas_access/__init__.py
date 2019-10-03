@@ -19,7 +19,7 @@ DEF_RE = re.compile("\s*\[(\w+)\]\s*(.*)$")
 
 # Get executable directory
 bin_dir = ''
-if not shutil.which('mdb-export'):
+if not shutil.which('mdb-export-raw'):
     env = os.environ.get('VIRTUAL_ENV', None)
     if env is not None:
         if platform.system() == 'Windows':
