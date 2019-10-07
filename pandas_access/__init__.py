@@ -4,6 +4,7 @@ import platform
 import re
 import shutil
 import subprocess
+import sys
 import pandas as pd
 import numpy as np
 try:
@@ -39,7 +40,14 @@ def list_tables(rdb_file, encoding="latin-1"):
         actually be UTF-8.
     :return: A list of the tables in a given database.
     """
-    tables = subprocess.check_output([mdb_tables, rdb_file]).decode(encoding)
+    if sys.platform == 'win32':
+        si = subprocess.STARTUPINFO()
+        si.dwFlags = subprocess.STARTF_USESHOWWINDOW
+        si.wShowWindow = subprocess.SW_HIDE
+        tables = subprocess.check_output(
+            [mdb_tables, rdb_file], startupinfo=si).decode(encoding)
+    else:
+        tables = subprocess.check_output([mdb_tables, rdb_file]).decode(encoding)
     return tables.strip().split(" ")
 
 
@@ -79,7 +87,14 @@ def read_schema(rdb_file, encoding='utf8'):
         spits out UTF-8, exclusively.
     :return: a dictionary of table -> column -> access_data_type
     """
-    output = subprocess.check_output([mdb_schema, rdb_file])
+    if sys.platform == 'win32':
+        si = subprocess.STARTUPINFO()
+        si.dwFlags = subprocess.STARTF_USESHOWWINDOW
+        si.wShowWindow = subprocess.SW_HIDE
+        output = subprocess.check_output(
+            [mdb_schema, rdb_file], startupinfo=si)
+    else:
+        output = subprocess.check_output([mdb_schema, rdb_file])
     lines = output.decode(encoding).splitlines()
     schema_ddl = "\n".join(l for l in lines if l and not l.startswith('-'))
 
@@ -146,7 +161,13 @@ def read_table(rdb_file, table_name, *args, **kwargs):
             kwargs['dtype'] = dtypes
 
     cmd = [mdb_export, '-b', 'octal', rdb_file, table_name]
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    if sys.platform == 'win32':
+        si = subprocess.STARTUPINFO()
+        si.dwFlags = subprocess.STARTF_USESHOWWINDOW
+        si.wShowWindow = subprocess.SW_HIDE
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, startupinfo=si)
+    else:
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     df = pd.read_csv(proc.stdout, keep_default_na=False, *args, **kwargs)
 
     # Convert octal string to raw bytes
