@@ -66,8 +66,7 @@ def _extract_defs(defs_str):
     defs = {}
     lines = defs_str.splitlines()
     for line in lines:
-        m = DEF_RE.match(line)
-        if m:
+        if m := DEF_RE.match(line):
             defs[m.group(1)] = m.group(2).replace(',', '').strip()
     return defs
 
@@ -83,11 +82,10 @@ def read_schema(rdb_file, encoding='utf8'):
     lines = output.decode(encoding).splitlines()
     schema_ddl = "\n".join(l for l in lines if l and not l.startswith('-'))
 
-    schema = {}
-    for table, defs in TABLE_RE.findall(schema_ddl):
-        schema[table] = _extract_defs(defs)
-
-    return schema
+    return {
+        table: _extract_defs(defs)
+        for table, defs in TABLE_RE.findall(schema_ddl)
+    }
 
 
 def to_pandas_schema(schema, implicit_string=True):
